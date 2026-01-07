@@ -1,4 +1,3 @@
-import pytest
 from main import say_hello, sum
 
 def test_say_hello(capsys):
