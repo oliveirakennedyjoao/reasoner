@@ -1,12 +1,21 @@
 from util.parser import parse_to_literal
 from lib.converteeminfixa import converteEmInFixa
+from lib.converteemposfixa import converteEmPosFixa
 from util.parser import parse_to_literal
 from domain.Literal import Literal
+from constants.constants import expected_fin
 import sys
 import os
 
 # Adiciona o diretório src ao path para permitir importações diretas
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
+def test_parse_to_literal():
+    entrada = "(((∃h.C)⊑CO)⊓(OL⊑(∃h.A)⊓(∀h.C))|=(OL(a)⊑CO(a)))"
+    result = parse_to_literal(entrada)
+
+    assert len(result) == len(entrada)
 
 
 def test_converteEmInFixa():
@@ -24,11 +33,11 @@ def test_converteEmInFixa():
     assert result == expected_result
 
 
-def test_parse_to_literal():
-    entrada = "(((∃h.C)⊑CO)⊓(OL⊑(∃h.A)⊓(∀h.C))|=(OL(a)⊑CO(a)))"
-    result = parse_to_literal(entrada)
+def test_converteEmPosFixa():
+    expected_Fpos = converteEmPosFixa(expected_fin)
 
-    assert len(result) == len(entrada)
+    for literal in expected_Fpos:
+        print(f"'{literal.rotulo}' (posição {literal.posicao})")
 
 
-test_converteEmInFixa()
+test_converteEmPosFixa()
