@@ -2,6 +2,7 @@ try:
     from ..domain.Literal import Literal
 except ImportError:
     from domain.Literal import Literal
+
 from typing import List
 
 

@@ -60,19 +60,3 @@ def tokenize(expr: str):
         raise ValueError(f"Caractere inesperado: {char}")
 
     return tokens
-
-
-def test_tokenize():
-    expr = "(((∃h.C)⊑CO)⊓(OL⊑(∃h.A)⊓(∀h.C))|=(OL(a)⊑CO(a)))"
-    tokens = tokenize(expr)
-    tokenized_expression = [
-        "(", "(", "(", "∃", "h", ".", "C", ")", "⊑", "CO", ")", "⊓", "(", "OL", "⊑", "(", "∃",
-        "h", ".", "A", ")", "⊓", "(", "∀", "h", ".", "C", ")", ")", "|=", "(", "OL(a)", "⊑", "CO(a)",
-        ")", ")"]
-    for token in tokens:
-        print(f"token: {token}")
-
-    print(tokens == tokenized_expression)
-
-
-test_tokenize()
