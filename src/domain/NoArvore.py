@@ -1,10 +1,9 @@
 class NoArvore:
-    def __init__(self, rotulo, polaridade, posicao, tipo, posSubst, instancia, noDireita, noEsquerda):
+    def __init__(self, rotulo, posicao, polaridade, tipo, posBl=None, posGD=None):
         self.rotulo = rotulo
-        self.polaridade = polaridade
         self.posicao = posicao
+        self.polaridade = polaridade
         self.tipo = tipo
-        self.posSubst = posSubst
-        self.instancia = instancia
-        self.noDireita = noDireita
-        self.noEsquerda = noEsquerda
+        self.posSubst = [posBl, posGD]
+        self.filhoDireita = None
+        self.filhoEsquerda = None
