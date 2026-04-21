@@ -18,14 +18,14 @@ from typing import List
 def atribuiPosicao(matriz: List[List[Elemento]], Fp: List[Literal], indice: int):
     achou = False
 
-    for i, lista_de_elementos in enumerate(matriz):
-        if isinstance(lista_de_elementos, Elemento):
-            atribuiPosicao(lista_de_elementos, Fp, indice)
+    for index in range(len(matriz)):
+        if not isinstance(matriz[index], Elemento):
+            atribuiPosicao(matriz[index], Fp, indice)
         else:
             while (indice < len(Fp) or achou is True):
                 if (isConstructor(Fp[indice].rotulo) is False):
-                    if (Fp[indice].rotulo == matriz[i].literal):
-                        matriz[i].posicao = Fp[indice].posicao
+                    if (Fp[indice].rotulo == matriz[index].literal):
+                        matriz[index].posicao = Fp[indice].posicao
                         achou = True
                         indice += 1
                     else:

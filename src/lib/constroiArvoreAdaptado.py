@@ -12,7 +12,6 @@ Args:
     - arcos (List): Array de tamanho 4 com os índices para dois ramos do tipo β e β'. Arcos é inicialmente vazio.
     - posBetal (int): Variável que armazena a posição de um nó do tipo β', a fim de associá-la a nós folha.
     - posGDelta (int): Variável que armazena a posição de um nó do tipo γ ou δ, a fim de associá-la a nós folha.
-    - inStr e inEnd (int): São duas variáveis inteiras que auxiliam na identificação dos nós que são folha. Seus valores iniciais são 0 e n-1, respectivamente, onde n é o número de elementos do array Fp.
 
 Returns:
     NoArvore: Retorna a AST na forma de uma árvore de NoArvore.
