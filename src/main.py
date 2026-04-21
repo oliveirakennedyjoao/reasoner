@@ -19,6 +19,12 @@ def run():
     pos = atualizaPosicao(adapted_expected_Fin, pos)
     Fpos = converteEmPosFixa(adapted_expected_Fin)
 
+    # 🔍 DEBUG: Ver o que está sendo processado
+    print("=== DEBUG: FÓRMULA PÓS-FIXA ===")
+    for i, literal in enumerate(Fpos):
+        print(f"[{i}] {literal.rotulo} (pos: {literal.posicao})")
+    print(f"Total: {len(Fpos)} elementos\n")
+
     ast = constroiArvore(Fpos, 0, [0, 0, 0, 0], 0, 0)
 
     imprimir_ast_completa(ast, titulo="Árvore Sintática Completa - Adaptada",

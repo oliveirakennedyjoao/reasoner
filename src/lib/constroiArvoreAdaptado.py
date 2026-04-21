@@ -25,52 +25,80 @@ def constroiArvore(Fp: List[Literal], pol: int, arcos: List, posBetal: int, posG
     posBl = posBetal
     posGD = posGDelta
 
-    for literal in Fp:
+    print(f"🔍 Iniciando construção com {len(Fp)} elementos")
+
+    for i, literal in enumerate(Fp):
+        print(f"[{i}] Processando: {literal.rotulo}")
         if literal.rotulo in construtores:
+            print(f"   → É construtor! Pilha atual: {len(pilha)} elementos")
+
             trl = busca_tipo_pol(literal.rotulo, pol)
+            print(f"   → Tipo encontrado: {trl.tipo}")
+
             if trl.tipo == 'β':
                 arcos[0] = arcos[0] + 1
                 arcos[1] = arcos[1] + 1
                 no = NoArvore(literal.rotulo, literal.posicao,
-                              pol, trl.tipo, arcos[0], arcos[1])
+                              pol, trl.tipo, posBl, posGD)
             elif trl.tipo == "β'":
                 arcos[2] = arcos[2] + 1
                 arcos[3] = arcos[2] + 1
                 posBl = literal.posicao
                 no = NoArvore(literal.rotulo, literal.posicao,
-                              pol, trl.tipo, arcos[2], arcos[3])
+                              pol, trl.tipo, posBl, posGD)
             elif trl.tipo == 'γ' or trl.tipo == 'δ':
                 posGD = literal.posicao
                 no = NoArvore(literal.rotulo, literal.posicao,
-                              pol, trl.tipo)
+                              pol, trl.tipo, posBl, posGD)
             else:
                 no = NoArvore(literal.rotulo, literal.posicao,
-                              pol, trl.tipo)
+                              pol, trl.tipo, posBl, posGD)
 
             # Lógica da pilha: operadores consomem operandos
             if literal.rotulo in ['¬', '∃', '∀']:  # Operadores unários
                 if pilha:
                     no.filhoEsquerda = pilha.pop()
+                    print(f"   → Operador unário: 1 filho adicionado")
+                else:
+                    print(f"   → Operador unário: nenhum filho na pilha")
 
             else:  # Operadores binários ['|=', '⊑', '⊓', '⊔']
                 if len(pilha) >= 2:
                     no.filhoDireita = pilha.pop()  # Segundo operando (direita)
                     no.filhoEsquerda = pilha.pop()  # Primeiro operando (esquerda)
+                    print(f"   → Operador binário: 2 filhos adicionados")
                 elif len(pilha) == 1:
                     no.filhoEsquerda = pilha.pop()
+                    print(f"   → Operador binário: apenas 1 filho disponível")
+                else:
+                    print(f"   → Operador binário: nenhum filho na pilha")
 
             # Atualizar polaridades dos filhos
             if no.filhoEsquerda and hasattr(trl, 'polNoEsq') and trl.polNoEsq is not None:
-                # Polaridade do filho esquerdo
                 no.filhoEsquerda.polaridade = trl.polNoEsq
+                print(f"   → Polaridade filho esq: {trl.polNoEsq}")
             if no.filhoDireita and hasattr(trl, 'polNoDir') and trl.polNoDir is not None:
-                # Polaridade do filho direito
                 no.filhoDireita.polaridade = trl.polNoDir
+                print(f"   → Polaridade filho dir: {trl.polNoDir}")
 
             pilha.append(no)
+            print(f"   → Operador processado. Pilha: {len(pilha)} elementos")
         else:
             # Folhas (variáveis, constantes) - usar posBl e posGD atualizados
-            no = NoArvore(literal.rotulo, literal.posicao, pol, posBl, posGD)
+            print(f"   → É folha! Adicionando à pilha")
+            no = NoArvore(literal.rotulo, literal.posicao,
+                          pol, 'folha', posBl, posGD)
             pilha.append(no)
+            print(f"   → Folha adicionada. Pilha: {len(pilha)} elementos")
 
-    return pilha[0] if pilha else None
+    print(f"🎯 Construção finalizada. Pilha final: {len(pilha)} elementos")
+
+    # Debug: mostrar elementos restantes na pilha
+    if len(pilha) > 1:
+        print("⚠️  ATENÇÃO: Pilha tem mais de 1 elemento! Elementos restantes:")
+        for i, elemento in enumerate(pilha):
+            print(f"   [{i}] {elemento.rotulo} (pos: {elemento.posicao})")
+        print("   → Retornando último elemento (topo da pilha) como raiz")
+
+    # Retorna o TOPO da pilha (último elemento)
+    return pilha[-1] if pilha else None
