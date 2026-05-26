@@ -6,9 +6,11 @@ def buscaPosicao(matriz, idElemento):
 
     for element in matriz:
         if not isinstance(element, Elemento):
-            buscaPosicao(element, idElemento)
+            result = buscaPosicao(element, idElemento)
+            if result is not None:
+                return result
         else:
             if element.id == idElemento:
-                posicaoElemento = element.id
+                posicaoElemento = element.posicao
                 break
     return posicaoElemento

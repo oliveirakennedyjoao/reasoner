@@ -14,25 +14,25 @@ from util.buscaPosicao import buscaPosicao
 """
 
 
-def buscaConexao(matriz, conexoes: list[Conexao], indice: int):
+def buscaConexao(matriz, conexoes: list[Conexao], indice: int, _raiz=None):
+    is_top = _raiz is None
+    if is_top:
+        _raiz = matriz
     for element in matriz:
-        if isinstance(element, Elemento):
-            buscaConexao(element, conexoes, indice)
+        if not isinstance(element, Elemento):
+            indice = buscaConexao(element, conexoes, indice, _raiz)
         else:
             if element.conexoes is not None:
                 for conexao in element.conexoes:
                     if not constaConexao(conexoes, conexao.ordem):
-                        if (element.id == conexao.idElemento1):
-                            # revisar essa parte
-                            # aqui deveria ser a posição do elemento, não o id (revisar isso depois)
-                            conexoes[indice].posicao1 = element.id
-                            conexoes[indice].posicao2 = buscaPosicao(
-                                conexao.idElemento2)
+                        if element.id == conexao.idElemento1:
+                            conexoes[indice].posicao1 = element.posicao
+                            conexoes[indice].posicao2 = buscaPosicao(_raiz, conexao.idElemento2)
                         else:
-                            # aqui deveria ser a posição do elemento, não o id (revisar isso depois)
-                            conexoes[indice].posicao2 = element.id
-                            conexoes[indice].posicao1 = buscaPosicao(
-                                conexao.idElemento1)
+                            conexoes[indice].posicao2 = element.posicao
+                            conexoes[indice].posicao1 = buscaPosicao(_raiz, conexao.idElemento1)
                         conexoes[indice].ordem = conexao.ordem
                         indice += 1
-    return ordenaConexao(conexoes)
+    if is_top:
+        return ordenaConexao(conexoes)
+    return indice
