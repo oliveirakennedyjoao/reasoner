@@ -6,6 +6,9 @@ from util.buscaNosTipo import buscaNosTipo
 from util.substituiPosicao import substituiPosicao
 from util.removeNo import removeNo
 from util.constaNo import constaNo
+from util.substituiPosicaoFinal import substituiPosicaoFinal
+from util.checaReflexividade import checaReflexividade
+from util.ehPredicado import ehPredicado
 
 from typing import List
 
@@ -35,7 +38,9 @@ def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List[NoArvo
                         conectar = True
                 else:
                     if cn[j] not in R:
-                        # executar algoritmo 7
+                        ##
+                        # algoritmo 7
+                        ##
                         if cn[j].tipo in ["α", "α'", "β"]:
                             R.append(cn[j])
                             ordemReducao.append(cn[j])
@@ -81,6 +86,28 @@ def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List[NoArvo
                         j += 1
         if conectar:
             # executar algoritmo 8
-            pass
+            # adaptado (folha1 e folha2), pois substituirPosicaoFinal modifica cn1 e cn2 realizando um pop
+            folha1 = cn1[-1]
+            folha2 = cn2[-1]
+            temp = substituiPosicaoFinal(cn1, cn2, sigmaFinal)
+            if temp is not None:
+                sigmaFinal = temp
+                isReflexiva = checaReflexividade(ordemReducao)
+
+                if not isReflexiva:
+                    parLit = [folha1, folha2]
+                    achou = False
+                    for pl in parLit:
+                        if pl in R:
+                            achou = True
+                            P.pop()
+                        else:
+                            R.append(P.pop())
+                    if achou == False and ehPredicado(parLit[0]):
+                        ordemReducao.extend(parLit)
+                else:
+                    return None
+            else:
+                return None
 
     return ordemReducao
