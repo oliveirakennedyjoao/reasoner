@@ -14,6 +14,7 @@ from typing import List
 
 
 def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List:
+    conexoes = sorted(conexoes, key=lambda c: c.posicao1, reverse=True)
     R = []
     P = []
     ordemReducao = []
@@ -30,6 +31,7 @@ def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List:
             conectar = False
             j = 0
             while continua:
+
                 if cn[j].tipo == None:
                     P.append(cn[j])
                     continua = False
@@ -84,6 +86,8 @@ def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List:
                         j += 1
                     else:
                         j += 1
+            if z == 2 and cn[-1] in P:
+                conectar = True
         if conectar:
             # executar algoritmo 8
             # adaptado (folha1 e folha2), pois substituirPosicaoFinal modifica cn1 e cn2 realizando um pop
@@ -100,9 +104,9 @@ def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List:
                     for pl in parLit:
                         if pl in R:
                             achou = True
-                            P.pop()
+                            P.pop(0)
                         else:
-                            R.append(P.pop())
+                            R.append(P.pop(0))
                     if achou == False and ehPredicado(parLit[0]):
                         ordemReducao.append(parLit)
                 else:

@@ -1,3 +1,5 @@
+from constants.constructors import construtores
+
 from domain.NoArvore import NoArvore
 from domain.Literal import Literal
 from util.buscaTipoPol import busca_tipo_pol
@@ -12,57 +14,73 @@ Args:
     - arcos (List): Array de tamanho 4 com os índices para dois ramos do tipo β e β'. Arcos é inicialmente vazio.
     - posBetal (int): Variável que armazena a posição de um nó do tipo β', a fim de associá-la a nós folha.
     - posGDelta (int): Variável que armazena a posição de um nó do tipo γ ou δ, a fim de associá-la a nós folha.
-    - inStr e inEnd (int): São duas variáveis inteiras que auxiliam na identificação dos nós que são folha. Seus valores iniciais são 0 e n-1, respectivamente, onde n é o número de elementos do array Fp.
 
 Returns:
     NoArvore: Retorna a AST na forma de uma árvore de NoArvore.
 """
 
+# pos é resultado da funcao atribuiPosicao, vai estar declarado no main.
+# index é global.
+# inStr é 0
+# inEnd é o tamanho do array Fp - 1
 
-def constroiArvore(inSrt: int, inEnd: int, Fp: List[Literal], pol: int, arcos: List, posBetal: int, posGDelta: int) -> NoArvore:
-    no: NoArvore
-    trl = [None] * 3  # trl[0] = tipo, trl[1] = polNoDir, trl[2] = polNoEsq
+
+def constroiArvore(inStr: int, inEnd: int, Fp: List[Literal], pol: int, arcos: List, posBetal: int, posGDelta: int, pos, index) -> NoArvore:
+    noRaiz: NoArvore
+    trl = None
     posBl = posBetal
-    posGD = posGDelta
-    construtores = ['|=', '⊑', '⊓', '⊔', '¬', '∃', '∀']
-    index = len(Fp) - 1
+    posGd = posGDelta
 
-    if inSrt > inEnd:
+    if inStr > inEnd:
         return None
-    for index in range(len(Fp)):
-        if Fp[index].rotulo in construtores:
-            trl = busca_tipo_pol(Fp[index].rotulo, pol)
-            if trl[0] == 'β':
-                arcos[0] = arcos[0] + 1
-                arcos[1] = arcos[1] + 1
-                no = NoArvore(0, len(Fp) - 1, Fp[index].rotulo, Fp[index].posicao,
-                              pol, trl[0], arcos[0], arcos[1])
-            elif trl[0] == "β'":
-                arcos[2] = arcos[2] + 1
-                arcos[3] = arcos[2] + 1
-                posBl = Fp[index].posicao
-                no = NoArvore(0, len(Fp) - 1, Fp[index].rotulo, Fp[index].posicao,
-                              pol, trl[0], arcos[2], arcos[3])
-            elif trl[0] == 'γ' or trl[0] == 'δ':
-                posGD = Fp[index].posicao
-                no = NoArvore(0, len(Fp) - 1, Fp[index].rotulo, Fp[index].posicao,
-                              pol, trl[0])
-            else:
-                no = NoArvore(0, len(Fp) - 1, Fp[index].rotulo, Fp[index].posicao,
-                              pol, trl[0])
+
+    if Fp[index[0]].rotulo in construtores:
+        trl = busca_tipo_pol(Fp[index[0]].rotulo, pol)
+
+        if trl.tipo == "β":
+            arcos[0] = arcos[0] + 1
+            arcos[1] = arcos[0] + 1
+            noRaiz = NoArvore(Fp[index[0]].rotulo,
+                              Fp[index[0]].posicao,
+                              pol,
+                              trl.tipo, arcos[0], arcos[1])
+
+        elif trl.tipo == "β'":
+            arcos[2] = arcos[2] + 1
+            arcos[3] = arcos[2] + 1
+            posBl = Fp[index[0]].posicao
+            noRaiz = NoArvore(Fp[index[0]].rotulo,
+                              Fp[index[0]].posicao,
+                              pol, trl.tipo, arcos[2], arcos[3])
+
+        elif trl.tipo == "γ" or trl.tipo == "δ":
+            posGd = Fp[index[0]].posicao
+            noRaiz = NoArvore(Fp[index[0]].rotulo,
+                              Fp[index[0]].posicao,
+                              pol, trl.tipo, None, None)
         else:
-            no = NoArvore(0, len(Fp) - 1, Fp[index].rotulo, Fp[index].posicao,
-                          pol, posBl, posGD)
+            noRaiz = NoArvore(Fp[index[0]].rotulo,
+                              Fp[index[0]].posicao,
+                              pol, trl.tipo, None, None)
+    else:
+        noRaiz = NoArvore(Fp[index[0]].rotulo,
+                          Fp[index[0]].posicao,
+                          pol, None, posBl, posGd)
+    m = pos[index[0]]
+    index[0] = index[0] - 1
 
-        m = pos[index]
-        index = index - 1
+    if inStr == inEnd:
+        return noRaiz
 
-        if inSrt == inEnd:
-            return no
+    if trl is not None and (trl.tipo == "γ" or trl.tipo == "δ"):
+        noRaiz.filhoDireita = constroiArvore(
+            m + 1, inEnd, Fp, trl.polNoDir, arcos, None, posGd, pos, index)
+        noRaiz.filhoEsquerda = constroiArvore(
+            inStr, m - 1, Fp, trl.polNoEsq, arcos, posBl, posGd, pos, index)
+    else:
+        noRaiz.filhoDireita = constroiArvore(
+            m + 1, inEnd, Fp, trl.polNoDir, arcos, posBl, posGd, pos, index)
+        noRaiz.filhoEsquerda = constroiArvore(
+            inStr, m - 1, Fp, trl.polNoEsq, arcos, posBl, posGd, pos, index)
 
-        no.filhoDir = constroiArvore(
-            m + 1, inEnd, Fp, trl[1], arcos, posBl, posGD)
-        no.filhoEsq = constroiArvore(
-            inSrt, m - 1, Fp, trl[2], arcos, posBl, posGD)
-
-        return no
+    return noRaiz

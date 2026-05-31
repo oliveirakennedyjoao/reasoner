@@ -8,6 +8,8 @@ def checaReflexividade(ordemReducao: List[NoArvore]) -> bool:
     tamanho = len(ordemReducao)
     for i in range(tamanho):
         for j in range(i + 1, tamanho):
+            if isinstance(ordemReducao[i], list) or isinstance(ordemReducao[j], list):
+                continue
             if ordemReducao[i].posicao == ordemReducao[j].posicao:
                 resp = 1
 

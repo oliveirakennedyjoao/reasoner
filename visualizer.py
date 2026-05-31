@@ -5,6 +5,11 @@ Uso: python visualizer.py
 Abre em: http://localhost:8080
 """
 
+from lib.constroiArvore import constroiArvore
+from lib.converteemposfixa import converteEmPosFixa
+from lib.converteeminfixa import converteEmInFixa
+from util.atualizaPosicao import atualizaPosicao
+from util.parser import parse_to_literal
 import json
 import sys
 import os
@@ -13,13 +18,8 @@ import webbrowser
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
-
-from util.parser import parse_to_literal
-from util.atualizaPosicao import atualizaPosicao
-from lib.converteeminfixa import converteEmInFixa
-from lib.converteemposfixa import converteEmPosFixa
-from lib.constroiArvoreAdaptado import constroiArvore
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "src"))
 
 
 FORMULA_EXEMPLO = "((((∃h.C)⊑CO)⊓(OL⊑((∃h.A)⊓(∀h.C))))|=(OL(a)⊑CO(a)))"
@@ -566,7 +566,8 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(resposta.encode("utf-8"))
         except Exception as e:
             erro = traceback.format_exc()
-            resposta = json.dumps({"erro": str(e), "traceback": erro}, ensure_ascii=False)
+            resposta = json.dumps(
+                {"erro": str(e), "traceback": erro}, ensure_ascii=False)
             self.send_response(500)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()

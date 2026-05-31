@@ -9,18 +9,25 @@ def substituiPosicaoFinal(cn1: List[NoArvore], cn2: List[NoArvore], sigmaFinal: 
     paiNo1 = cn1[-1]
     paiNo2 = cn2[-1]
 
-    tam = sum(1 for p in no1.posSubst if p is not None)
+    no1_vals = [p for p in no1.posSubst if p is not None]
+    no2_vals = [p for p in no2.posSubst if p is not None]
+    tam = len(no1_vals)
 
     for i in range(tam):
-        par = [no1.posSubst[i], no2.posSubst[i]]
+        par = [no1_vals[i], no2_vals[i] if i < len(no2_vals) else None]
 
         if par[0] != par[1]:
             if len(sigmaFinal) > 0:
-                for sigma in sigmaFinal:
-                    if sigma[0] == no1.posSubst[i]:
-                        par[0] = sigma[1]
-                    elif sigma[0] == no2.posSubst[i]:
-                        par[1] = sigma[1]
+                alterado = True
+                while alterado:
+                    alterado = False
+                    for sigma in sigmaFinal:
+                        if sigma[0] == par[0] and par[0] != sigma[1]:
+                            par[0] = sigma[1]
+                            alterado = True
+                        elif sigma[0] == par[1] and par[1] != sigma[1]:
+                            par[1] = sigma[1]
+                            alterado = True
 
         if par[0] != par[1]:
             if paiNo1.tipo in ["α", "α'"]:
