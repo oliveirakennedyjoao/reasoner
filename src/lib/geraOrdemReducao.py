@@ -13,7 +13,7 @@ from util.ehPredicado import ehPredicado
 from typing import List
 
 
-def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List[NoArvore]:
+def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List:
     R = []
     P = []
     ordemReducao = []
@@ -104,7 +104,7 @@ def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List[NoArvo
                         else:
                             R.append(P.pop())
                     if achou == False and ehPredicado(parLit[0]):
-                        ordemReducao.extend(parLit)
+                        ordemReducao.append(parLit)
                 else:
                     return None
             else:
