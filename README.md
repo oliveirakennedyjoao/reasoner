@@ -11,8 +11,8 @@ A código produzido é a composição de 10 algoritmos:
         - [x] atribuiPosicao
 
     Etapa 3:
-        - [ ] buscaConexão
-        - [ ] geraOrdemReducao
+        - [x] buscaConexão
+        - [x] geraOrdemReducao
         - [ ] constroiEstruturaSequentes
 
     Etapa 4:
