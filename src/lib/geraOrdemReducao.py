@@ -2,6 +2,10 @@ from domain.ConexaoNo import ConexaoNo
 from domain.NoArvore import NoArvore
 
 from util.buscaCaminho import buscaCaminho
+from util.buscaNosTipo import buscaNosTipo
+from util.substituiPosicao import substituiPosicao
+from util.removeNo import removeNo
+from util.constaNo import constaNo
 
 from typing import List
 
@@ -9,6 +13,10 @@ from typing import List
 def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List[NoArvore]:
     R = []
     P = []
+    ordemReducao = []
+    alphaL = []
+    delta = []
+    sigmaFinal = []
 
     for conexao in conexoes:
         cn1 = buscaCaminho(noRaiz, conexao.posicao1, [])
@@ -28,6 +36,46 @@ def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List[NoArvo
                 else:
                     if cn[j] not in R:
                         # executar algoritmo 7
+                        if cn[j].tipo in ["α", "α'", "β"]:
+                            R.append(cn[j])
+                            ordemReducao.append(cn[j])
+                            if cn[j].tipo == "α'":
+                                alphaL.append(cn[j])
+                        elif cn[j].tipo == "δ":
+                            delta.append(cn[j])
+                            R.append(cn[j])
+                            ordemReducao.append(cn[j])
+                            nosGamma = buscaNosTipo("γ", P)
+                            if len(nosGamma) > 0:
+                                for noGamma in nosGamma:
+                                    sigmaDelta = substituiPosicao(
+                                        noGamma, delta[-1], sigmaFinal)
+                                    R.append(noGamma)
+                                    P = removeNo(noGamma, P)
+                                    sigmaFinal = sigmaDelta
+                        elif cn[j].tipo == "β'":
+                            if len(alphaL) > 0:
+                                sigmaBeta = substituiPosicao(
+                                    cn[j], alphaL[-1], sigmaFinal)
+                                R.append(cn[j])
+                                ordemReducao.append(cn[j])
+                                sigmaFinal = sigmaBeta
+                            else:
+                                for no in cn[j:]:
+                                    if not constaNo(no, P):
+                                        P.append(no)
+                                continua = False
+                        elif cn[j].tipo == "γ":
+                            if len(delta) > 0:
+                                sigmaGamma = substituiPosicao(
+                                    cn[j], delta[-1], sigmaFinal)
+                                R.append(cn[j])
+                                sigmaFinal = sigmaGamma
+                            else:
+                                for no in cn[j:]:
+                                    if not constaNo(no, P):
+                                        P.append(no)
+                                continua = False
                         j += 1
                     else:
                         j += 1
@@ -35,4 +83,4 @@ def geraOrdemReducao(conexoes: List[ConexaoNo], noRaiz: NoArvore) -> List[NoArvo
             # executar algoritmo 8
             pass
 
-    return P
+    return ordemReducao

@@ -7,3 +7,8 @@ class NoArvore:
         self.posSubst = [posBl, posGD]
         self.filhoDireita = None
         self.filhoEsquerda = None
+
+    def __eq__(self, other):
+        if isinstance(other, NoArvore):
+            return self.posicao == other.posicao
+        return False
