@@ -5,11 +5,6 @@ Uso: python visualizer.py
 Abre em: http://localhost:8080
 """
 
-from lib.constroiArvore import constroiArvore
-from lib.converteemposfixa import converteEmPosFixa
-from lib.converteeminfixa import converteEmInFixa
-from util.atualizaPosicao import atualizaPosicao
-from util.parser import parse_to_literal
 import json
 import sys
 import os
@@ -21,8 +16,26 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 sys.path.insert(0, os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "src"))
 
+from lib.constroiArvore import constroiArvore
+from lib.converteemposfixa import converteEmPosFixa
+from lib.converteeminfixa import converteEmInFixa
+from lib.geraOrdemReducao import geraOrdemReducao
+from domain.ConexaoNo import ConexaoNo
+from util.atualizaPosicao import atualizaPosicao
+from util.parser import parse_to_literal
+from constants.constants import expected_Fpos, expected_Fin
 
-FORMULA_EXEMPLO = "((((∃h.C)⊑CO)⊓(OL⊑((∃h.A)⊓(∀h.C))))|=(OL(a)⊑CO(a)))"
+
+FORMULA_EXEMPLO = "(((∃h.C)⊑CO)⊓(OL⊑(∃h.A)⊓(∀h.C))|=(OL(a)⊑CO(a)))"
+
+# Conexões do Método de Conexões para a fórmula de exemplo (tese p.58)
+CONEXOES_EXEMPLO = [
+    ConexaoNo(33, 9, 1),
+    ConexaoNo(6, 26, 2),
+    ConexaoNo(24, 17, 3),
+    ConexaoNo(13, 31, 4),
+    ConexaoNo(4, 17, 5),
+]
 
 
 def literal_para_dict(lit):
@@ -48,15 +61,64 @@ def no_para_dict(no):
     return d
 
 
+def ordem_reducao_para_dict(ordemReducao):
+    resultado = []
+    for item in ordemReducao:
+        if isinstance(item, list):
+            resultado.append({
+                "tipo": "par",
+                "nos": [{"rotulo": n.rotulo, "posicao": n.posicao} for n in item],
+            })
+        else:
+            resultado.append({
+                "tipo": "no",
+                "rotulo": item.rotulo,
+                "posicao": item.posicao,
+                "tipoNo": item.tipo,
+            })
+    return resultado
+
+
 def executar_pipeline(formula: str):
     F = parse_to_literal(formula)
     Fin = converteEmInFixa(F)
 
-    pos = [lit.posicao for lit in Fin]
-    atualizaPosicao(Fin, pos)
     Fpos = converteEmPosFixa(Fin)
+    pos = [lit.posicao for lit in Fpos]
+    atualizaPosicao(Fin, pos)
 
-    ast = constroiArvore(Fpos, 0, [0, 0, 0, 0], 0, 0)
+    n = len(Fpos)
+    index = [n - 1]
+    ast = constroiArvore(0, n - 1, Fpos, 0, [0, 0, 0, 0], 0, None, pos, index)
+
+    # geraOrdemReducao: usa conexões da fórmula de exemplo com expected_Fpos/Fin
+    # para garantir que as posições das conexões correspondam à árvore construída
+    eh_formula_exemplo = formula.strip() == FORMULA_EXEMPLO
+    if eh_formula_exemplo:
+        pos_ex = [lit.posicao for lit in expected_Fpos]
+        atualizaPosicao(expected_Fin, pos_ex)
+        n_ex = len(expected_Fpos)
+        index_ex = [n_ex - 1]
+        ast_ex = constroiArvore(0, n_ex - 1, expected_Fpos, 0, [0, 0, 0, 0], 0, None, pos_ex, index_ex)
+        ordemReducao = geraOrdemReducao(CONEXOES_EXEMPLO, ast_ex)
+        etapa_ordem = {
+            "titulo": "Etapa 5 — geraOrdemReducao (Alg 6/7/8)",
+            "descricao": "Gera a ordem de redução ◁ a partir das conexões e da AST.",
+            "entrada": {
+                "conexoes": [
+                    {"posicao1": c.posicao1, "posicao2": c.posicao2, "ordem": c.ordem}
+                    for c in CONEXOES_EXEMPLO
+                ]
+            },
+            "saida": {"ordemReducao": ordem_reducao_para_dict(ordemReducao)},
+        }
+    else:
+        etapa_ordem = {
+            "titulo": "Etapa 5 — geraOrdemReducao (Alg 6/7/8)",
+            "descricao": "Requer conexões do Método de Conexões (Alg 5-10, não implementados). Use a fórmula de exemplo para ver esta etapa.",
+            "entrada": {},
+            "saida": {"ordemReducao": None},
+        }
 
     return [
         {
@@ -79,10 +141,11 @@ def executar_pipeline(formula: str):
         },
         {
             "titulo": "Etapa 4 — constroiArvore (Alg 3)",
-            "descricao": "Constrói a AST (árvore de fórmula) iterativamente a partir da fórmula pós-fixa.",
+            "descricao": "Constrói a AST (árvore de fórmula) recursivamente a partir da fórmula pós-fixa.",
             "entrada": {"Fpos": [literal_para_dict(l) for l in Fpos]},
             "saida": {"ast": no_para_dict(ast)},
         },
+        etapa_ordem,
     ]
 
 
@@ -359,8 +422,29 @@ function renderEntrada(entrada) {
   if (entrada.formula !== undefined) {
     return `<div class="formula-raw">${esc(entrada.formula)}</div>`;
   }
+  if (entrada.conexoes !== undefined) {
+    if (!entrada.conexoes || entrada.conexoes.length === 0)
+      return '<span class="placeholder">—</span>';
+    return '<div class="chips">' + entrada.conexoes.map(c =>
+      `<span class="chip constructor">(${c.posicao1},${c.posicao2})<span class="idx">#${c.ordem}</span></span>`
+    ).join('') + '</div>';
+  }
+  if (Object.keys(entrada).length === 0)
+    return '<span class="placeholder">—</span>';
   const key = Object.keys(entrada)[0];
   return renderChips(entrada[key]);
+}
+
+function renderOrdemReducao(items) {
+  if (!items) return '<span class="placeholder">Não disponível — use a fórmula de exemplo</span>';
+  if (items.length === 0) return '<span class="placeholder">◁ vazia</span>';
+  return '<div class="chips">' + items.map(item => {
+    if (item.tipo === 'par') {
+      const rotulos = item.nos.map(n => `${esc(n.rotulo)}<span class="idx">${n.posicao}</span>`).join(', ');
+      return `<span class="chip constructor">{${rotulos}}</span>`;
+    }
+    return `<span class="chip ${item.tipoNo ? '' : 'paren'}">${esc(item.rotulo)}<span class="idx">${item.posicao}</span></span>`;
+  }).join('') + '</div>';
 }
 
 function renderSaida(saida, stepIdx) {
@@ -370,6 +454,9 @@ function renderSaida(saida, stepIdx) {
     if (!val) return '<span class="placeholder">AST vazia</span>';
     return `<div id="ast-tree-${stepIdx}" class="ast-d3-container"></div>
 <div class="tree-hint">scroll para zoom · arrastar para mover</div>`;
+  }
+  if (key === 'ordemReducao') {
+    return renderOrdemReducao(val);
   }
   return renderChips(val);
 }
