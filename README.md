@@ -13,7 +13,7 @@ A código produzido é a composição de 10 algoritmos:
     Etapa 3:
         - [x] buscaConexão
         - [x] geraOrdemReducao
-        - [ ] constroiEstruturaSequentes
+        - [x] constroiEstruturaSequentes
 
     Etapa 4:
-        - [ ] constroiSequentes
+        - [ ] constroiSequentes (em progresso)
