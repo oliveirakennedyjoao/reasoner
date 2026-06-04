@@ -6,6 +6,7 @@ from constants import regras as REGRAS
 from util.aplicaRegraLAndROr import aplicaRegraLAndROr
 from util.aplicaRegraRNotAndLNotOr import aplicaRegraRNotAndLNotOr
 from util.aplicaRegraLNotNotRNotNot import aplicaRegraLNotNotRNotNot
+from util.aplicaRegraLOrRAnd import aplicaRegraLOrRAnd
 
 from typing import List, Literal
 
