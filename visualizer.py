@@ -24,6 +24,9 @@ from domain.ConexaoNo import ConexaoNo
 from util.atualizaPosicao import atualizaPosicao
 from util.parser import parse_to_literal
 from constants.constants import expected_Fpos, expected_Fin
+from lib.constroiEstruturaSequentes import constroiEstruturaSequentes
+from lib.atribuiPosicao import atribuiPosicao
+from constants.matrix import build_matrix
 
 
 FORMULA_EXEMPLO = "(((∃h.C)⊑CO)⊓(OL⊑(∃h.A)⊓(∀h.C))|=(OL(a)⊑CO(a)))"
@@ -79,6 +82,38 @@ def ordem_reducao_para_dict(ordemReducao):
     return resultado
 
 
+def elemento_para_dict(elem):
+    return {"id": elem.id, "literal": elem.literal, "polaridade": elem.polaridade, "posicao": elem.posicao}
+
+
+def matriz_para_dict(m):
+    return [[elemento_para_dict(e) for e in clause] for clause in m]
+
+
+def no_est_para_dict(no):
+    if no is None:
+        return None
+    if isinstance(no, list):
+        return {
+            "rotulo": "cn",
+            "posicao": -1,
+            "polaridade": None,
+            "tipo": "conexao",
+            "conexaoNos": [{"rotulo": n.rotulo, "posicao": n.posicao} for n in no],
+        }
+    d = {
+        "rotulo": no.rotulo,
+        "posicao": no.posicao,
+        "polaridade": no.polaridade,
+        "tipo": no.tipo,
+    }
+    if no.filhoEsquerda:
+        d["filhoEsquerda"] = no_est_para_dict(no.filhoEsquerda)
+    if no.filhoDireita:
+        d["filhoDireita"] = no_est_para_dict(no.filhoDireita)
+    return d
+
+
 def executar_pipeline(formula: str):
     F = parse_to_literal(formula)
     Fin = converteEmInFixa(F)
@@ -100,9 +135,20 @@ def executar_pipeline(formula: str):
         n_ex = len(expected_Fpos)
         index_ex = [n_ex - 1]
         ast_ex = constroiArvore(0, n_ex - 1, expected_Fpos, 0, [0, 0, 0, 0], 0, None, pos_ex, index_ex)
+
+        matriz = build_matrix()
+        atribuiPosicao(matriz, expected_Fpos)
+        etapa_atribui = {
+            "titulo": "Etapa 5 — atribuiPosicao (Alg 4)",
+            "descricao": "Atribui posições da fórmula pós-fixa a cada elemento da matriz de prova do Método de Conexões.",
+            "entrada": {"Fpos": [literal_para_dict(l) for l in expected_Fpos]},
+            "saida": {"matriz": matriz_para_dict(matriz)},
+        }
+
         ordemReducao = geraOrdemReducao(CONEXOES_EXEMPLO, ast_ex)
+        ordemReducaoDict = ordem_reducao_para_dict(ordemReducao)
         etapa_ordem = {
-            "titulo": "Etapa 5 — geraOrdemReducao (Alg 6/7/8)",
+            "titulo": "Etapa 6 — geraOrdemReducao (Alg 6/7/8)",
             "descricao": "Gera a ordem de redução ◁ a partir das conexões e da AST.",
             "entrada": {
                 "conexoes": [
@@ -110,14 +156,34 @@ def executar_pipeline(formula: str):
                     for c in CONEXOES_EXEMPLO
                 ]
             },
-            "saida": {"ordemReducao": ordem_reducao_para_dict(ordemReducao)},
+            "saida": {"ordemReducao": ordemReducaoDict},
+        }
+
+        estrutura = constroiEstruturaSequentes(ordemReducao, [0])
+        etapa_estrutura = {
+            "titulo": "Etapa 7 — constroiEstruturaSequentes (Alg 9/10)",
+            "descricao": "Constrói a árvore da estrutura de prova em sequentes a partir da ordem de redução ◁.",
+            "entrada": {"ordemReducao": ordemReducaoDict},
+            "saida": {"estruturaSequentes": no_est_para_dict(estrutura)},
         }
     else:
+        etapa_atribui = {
+            "titulo": "Etapa 5 — atribuiPosicao (Alg 4)",
+            "descricao": "Requer a matriz do Método de Conexões. Use a fórmula de exemplo para ver esta etapa.",
+            "entrada": {},
+            "saida": {"matriz": None},
+        }
         etapa_ordem = {
-            "titulo": "Etapa 5 — geraOrdemReducao (Alg 6/7/8)",
-            "descricao": "Requer conexões do Método de Conexões (Alg 5-10, não implementados). Use a fórmula de exemplo para ver esta etapa.",
+            "titulo": "Etapa 6 — geraOrdemReducao (Alg 6/7/8)",
+            "descricao": "Requer conexões do Método de Conexões. Use a fórmula de exemplo para ver esta etapa.",
             "entrada": {},
             "saida": {"ordemReducao": None},
+        }
+        etapa_estrutura = {
+            "titulo": "Etapa 7 — constroiEstruturaSequentes (Alg 9/10)",
+            "descricao": "Requer a ordem de redução. Use a fórmula de exemplo para ver esta etapa.",
+            "entrada": {},
+            "saida": {"estruturaSequentes": None},
         }
 
     return [
@@ -145,7 +211,9 @@ def executar_pipeline(formula: str):
             "entrada": {"Fpos": [literal_para_dict(l) for l in Fpos]},
             "saida": {"ast": no_para_dict(ast)},
         },
+        etapa_atribui,
         etapa_ordem,
+        etapa_estrutura,
     ]
 
 
@@ -335,6 +403,7 @@ details[open] > summary .toggle-icon { transform: rotate(90deg); }
 .b-gamma  { background: #1a3323; color: #4ade80; }
 .b-delta  { background: #33250f; color: #fb923c; }
 .b-folha  { background: #1f2937; color: #6b7280; }
+.b-conexao { background: #2d1020; color: #fb7185; }
 
 .placeholder { color: #2d3748; font-size: 0.85rem; font-style: italic; }
 .loading { color: #4b5563; font-size: 0.85rem; padding: 1rem 0; }
@@ -355,7 +424,7 @@ details[open] > summary .toggle-icon { transform: rotate(90deg); }
     <div class="input-row">
       <div style="flex:1">
         <label>Fórmula ALC</label>
-        <input type="text" id="formula" value="((((∃h.C)⊑CO)⊓(OL⊑((∃h.A)⊓(∀h.C))))|=(OL(a)⊑CO(a)))">
+        <input type="text" id="formula" value="(((∃h.C)⊑CO)⊓(OL⊑(∃h.A)⊓(∀h.C))|=(OL(a)⊑CO(a)))">
       </div>
       <div>
         <label>&nbsp;</label>
@@ -377,7 +446,7 @@ function tipoBadge(tipo) {
     'α': ['b-alpha', 'α'], "α'": ['b-alpha2', "α'"],
     'β': ['b-beta', 'β'], "β'": ['b-beta2', "β'"],
     'γ': ['b-gamma', 'γ'], 'δ': ['b-delta', 'δ'],
-    'folha': ['b-folha', '◆'],
+    'folha': ['b-folha', '◆'], 'conexao': ['b-conexao', 'cn'],
   };
   const [cls, label] = map[tipo] || ['b-folha', tipo];
   return `<span class="badge ${cls}">${label}</span>`;
@@ -418,9 +487,25 @@ function renderNo(no, depth = 0) {
   return `<details class="tnode"${open}><summary>${label}</summary>${children}</details>`;
 }
 
+function renderMatriz(clauses) {
+  if (!clauses) return '<span class="placeholder">Não disponível — use a fórmula de exemplo</span>';
+  return clauses.map((clause, ci) => {
+    const chips = clause.map(e => {
+      const polClass = e.polaridade === 1 ? 'pol-1' : 'pol-0';
+      const pol = `<span class="n-pol ${polClass}">${e.polaridade === 1 ? '¹' : '⁰'}</span>`;
+      const pos = e.posicao != null ? `<span class="idx">${e.posicao}</span>` : `<span class="idx" style="color:#4b5563">?</span>`;
+      return `<span class="chip">${esc(e.literal)}${pol}${pos}</span>`;
+    }).join('');
+    return `<div style="margin-bottom:0.4rem"><span style="color:#374151;font-size:0.7rem;margin-right:0.4rem">C${ci + 1}</span><span class="chips">${chips}</span></div>`;
+  }).join('');
+}
+
 function renderEntrada(entrada) {
   if (entrada.formula !== undefined) {
     return `<div class="formula-raw">${esc(entrada.formula)}</div>`;
+  }
+  if (entrada.ordemReducao !== undefined) {
+    return renderOrdemReducao(entrada.ordemReducao);
   }
   if (entrada.conexoes !== undefined) {
     if (!entrada.conexoes || entrada.conexoes.length === 0)
@@ -455,6 +540,14 @@ function renderSaida(saida, stepIdx) {
     return `<div id="ast-tree-${stepIdx}" class="ast-d3-container"></div>
 <div class="tree-hint">scroll para zoom · arrastar para mover</div>`;
   }
+  if (key === 'estruturaSequentes') {
+    if (!val) return '<span class="placeholder">Não disponível — use a fórmula de exemplo</span>';
+    return `<div id="est-tree-${stepIdx}" class="ast-d3-container"></div>
+<div class="tree-hint">estrutura de sequentes · scroll para zoom · arrastar para mover</div>`;
+  }
+  if (key === 'matriz') {
+    return renderMatriz(val);
+  }
   if (key === 'ordemReducao') {
     return renderOrdemReducao(val);
   }
@@ -465,11 +558,15 @@ const TIPO_COLOR = {
   'α': '#60a5fa', "α'": '#7dd3fc',
   'β': '#c084fc', "β'": '#d8b4fe',
   'γ': '#4ade80', 'δ': '#fb923c',
-  'folha': '#4b5563'
+  'folha': '#4b5563', 'conexao': '#fb7185'
 };
 
 function toHierarchy(no) {
   const n = { rotulo: no.rotulo, posicao: no.posicao, polaridade: no.polaridade, tipo: no.tipo };
+  if (no.tipo === 'conexao' && no.conexaoNos) {
+    n.children = no.conexaoNos.map(cn => ({ rotulo: cn.rotulo, posicao: cn.posicao, polaridade: null, tipo: 'folha' }));
+    return n;
+  }
   const kids = [];
   if (no.filhoEsquerda) kids.push(toHierarchy(no.filhoEsquerda));
   if (no.filhoDireita)  kids.push(toHierarchy(no.filhoDireita));
@@ -566,6 +663,7 @@ function renderSteps(steps) {
   `).join('');
   steps.forEach((s, i) => {
     if (s.saida.ast) requestAnimationFrame(() => drawASTTree(`ast-tree-${i}`, s.saida.ast));
+    if (s.saida.estruturaSequentes) requestAnimationFrame(() => drawASTTree(`est-tree-${i}`, s.saida.estruturaSequentes));
   });
 }
 
