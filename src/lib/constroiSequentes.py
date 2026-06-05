@@ -7,6 +7,7 @@ from util.aplicaRegraLAndROr import aplicaRegraLAndROr
 from util.aplicaRegraRNotAndLNotOr import aplicaRegraRNotAndLNotOr
 from util.aplicaRegraLNotNotRNotNot import aplicaRegraLNotNotRNotNot
 from util.aplicaRegraLOrRAnd import aplicaRegraLOrRAnd
+from util.aplicaRegraRForAllLExists import aplicaRegraRForAllLExists
 
 from typing import List, Literal
 
